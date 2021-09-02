@@ -14,6 +14,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <unistd.h>
+
 #include "types.hpp"
 #include "logger.hpp"
 #include "error.hpp"
@@ -82,6 +84,14 @@ int main(int argc, char **argv)
             "to be directed to a file or screen, default value is screen",
              cxxopts::value<std::uint32_t>());
         options.add_options()
+            ("disp-target-file", "Scenario statistics display in file"
+            "file to which statistics should be written, used with option disp-target",
+             cxxopts::value<std::string>());
+        options.add_options()
+            ("pid-file", "Run simulator in backgroud and write PID to file"
+            "file to which pid should be written",
+             cxxopts::value<std::string>());
+        options.add_options()
             ("error-file", "File name where the error "
             "logs has to be written",
              cxxopts::value<std::string>());
@@ -106,6 +116,19 @@ int main(int argc, char **argv)
 
         Config *pCfg = Config::getInstance();
         pCfg->setConfig(results);
+
+        if (!pCfg->getPidFile().empty())
+        {
+            if (daemon(1, 0) == 0)
+            {
+                pCfg->writePidFile();
+            }
+	    else
+            {
+                std::cout << "Error: unable to deamonize\n";
+                exit(1);
+            }
+        }
 
         Logger::init(pCfg->getLogLevel());
 

@@ -72,6 +72,7 @@ public:
     VOID setLogLevel(std::uint32_t logLvl);
     VOID setTraceMsg(BOOL);
     VOID setTraceMsgFile(string);
+    VOID setPidFile(string);
 
     IpAddr        getRemoteIpAddr();
     string        getRemIpAddrStr();
@@ -82,6 +83,8 @@ public:
     U16           getLocalGtpcPort();
     U16           getLocalGtpcSendPort();
     U32           getDisplayRefreshTimer();
+    DisplayTargetEn getDisplayTarget();
+    string        getDisplayTargetFile();
     U32           getT3Timer();
     U32           getScnRunInterval();
     const S8 *    getScnFile();
@@ -103,7 +106,9 @@ public:
     void          setNodeType(std::string node);
     std::string   getNodeTypeStr();
     std::string   getIfTypeStr();
+    std::string   getPidFile();
 
+    VOID          writePidFile();
 private:
     Config();
     RETVAL saveIp(string &ipStr, IpAddr *pIp);
@@ -136,6 +141,7 @@ private:
     string          m_imsiStr;
     Time_t          m_deadCallWait;
     string          m_nodeTypStr;
+    string          m_pidFile;
 };
 
 #endif

@@ -28,9 +28,12 @@ class Display: virtual public Task
       VOID createMsgDirLst();
 
       static void displayStats();
+      void shutdown();
    private:
       static class Display  *m_pDisp;
 
+      VOID              displayToTarget();
+      VOID              dispFile();
       VOID              disp();
       Counter           getStats(GtpStat_t type);
 
@@ -45,7 +48,10 @@ class Display: virtual public Task
       S8                m_timeStr[GSIM_TIME_STR_MAX_LEN];
       ProcSequence      *m_procSeq;
       VOID              printJob(Job*);
+      VOID              printJobFile(Job*);
       std::string       m_ifTypeStr;
+      DisplayTargetEn   m_dispTgt;
+      std::string       m_dispTgtFile;
 };
 
 #endif

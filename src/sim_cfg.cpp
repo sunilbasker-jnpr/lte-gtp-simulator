@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <netdb.h>
+#include <fstream>
 
 #include "types.hpp"
 #include "logger.hpp"
@@ -210,6 +211,17 @@ VOID Config::setConfig(cxxopts::ParseResult options)
         setDisplayTarget((DisplayTargetEn)value);
     }
 
+    if (options.count("disp-target-file"))
+    {
+        auto value = options["disp-target-file"].as<std::string>();
+        setDisplayTargetFile(value);
+    }
+
+    if ((getDisplayTarget() == DISP_TARGET_FILE) && getDisplayTargetFile().empty())
+    {
+        throw GsimError("Must specify argument 'disp-target-file' when 'disp-target' is file");
+    }
+
     if (options.count("error-file"))
     {
         auto value = options["error-file"].as<std::string>();
@@ -226,6 +238,12 @@ VOID Config::setConfig(cxxopts::ParseResult options)
     {
         auto value = options["log-level"].as<std::uint32_t>();
         setLogLevel(value);
+    }
+
+    if (options.count("pid-file"))
+    {
+        auto value = options["pid-file"].as<std::string>();
+        setPidFile(value);
     }
 }
 
@@ -372,6 +390,11 @@ VOID Config::setDisplayTarget(DisplayTargetEn target)
     }
 }
 
+DisplayTargetEn Config::getDisplayTarget()
+{
+    return pCfg->dispTarget;
+}
+
 VOID Config::setErrorFile(string filename) throw(ErrCodeEn)
 {
     if (filename.size() == 0)
@@ -414,6 +437,36 @@ VOID Config::setDisplayTargetFile(string filename)
             throw GsimError("Dispay Target is not matching");
         }
     }
+}
+
+string Config::getDisplayTargetFile()
+{
+    return pCfg->dispTargetFile;
+}
+
+VOID Config::setPidFile(string filename)
+{
+    if (filename.size() == 0)
+    {
+        throw GsimError("Invalid Pid file");
+    }
+    else
+    {
+        pCfg->m_pidFile = filename;
+    }
+}
+
+string Config::getPidFile()
+{
+   return m_pidFile;
+}
+
+VOID Config::writePidFile()
+{
+   ofstream pidf;
+   pidf.open(m_pidFile, ios::out | ios::trunc);
+   pidf << getpid() << std::endl;
+   pidf.close();
 }
 
 RETVAL Config::saveIp(string &ipStr, IpAddr *pIp)

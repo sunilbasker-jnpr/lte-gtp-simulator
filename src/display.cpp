@@ -20,6 +20,7 @@
 #include <exception>
 #include <list>
 #include <vector>
+#include <fstream>
 
 #include "types.hpp"
 #include "error.hpp"
@@ -71,7 +72,8 @@
     }
 
 class Display *Display::m_pDisp = NULL;
-PRIVATE VOID screen_exit();
+ofstream fout;
+PRIVATE VOID exit_handler();
 
 Display *Display::getInstance()
 {
@@ -93,10 +95,10 @@ Display *Display::getInstance()
 
 Display::~Display()
 {
-    screen_exit();
+    exit_handler();
 }
 
-PRIVATE VOID screen_exit()
+PRIVATE VOID exit_handler()
 {
     /* Some signals may be delivered twice during exit() execution,
      * and we must prevent all this from beeing done twice */
@@ -107,16 +109,44 @@ PRIVATE VOID screen_exit()
     }
 
     alreadyExited = TRUE;
-    endwin();
+    Display::getInstance()->shutdown();
+}
+
+VOID Display::shutdown()
+{
+    static BOOL shutdownDone = FALSE;
+    if (shutdownDone)
+    {
+        return;
+    }
+    shutdownDone = TRUE;
+    switch (m_dispTgt)
+    {
+    case DISP_TARGET_SCREEN:
+    {
+        endwin();
+        break;
+    }
+    case DISP_TARGET_FILE:
+    {
+        dispFile();
+        fout.close();
+        break;
+    }
+    case DISP_TARGET_NONE:
+    case DISP_TARGET_MAX:
+    {
+        break;
+    }
+    }
 }
 
 VOID Display::init()
 {
     struct sigaction action_quit;
 
-    initscr();
-    noecho();
-
+    m_dispTgt   = Config::getInstance()->getDisplayTarget();
+    m_dispTgtFile = Config::getInstance()->getDisplayTargetFile();
     m_dispIntvl = Config::getInstance()->getDisplayRefreshTimer();
     m_pStats    = Stats::getInstance();
     getTimeStr(m_timeStr);
@@ -130,9 +160,29 @@ VOID Display::init()
 
     m_procSeq = &(Scenario::getInstance()->m_procSeq);
 
+    switch (m_dispTgt)
+    {
+    case DISP_TARGET_SCREEN:
+    {
+        initscr();
+        noecho();
+        break;
+    }
+    case DISP_TARGET_FILE:
+    {
+        fout.open(m_dispTgtFile, ios::out | ios::trunc);
+        fout << "Test\n";
+        break;
+    }
+    default:
+    {
+       throw GsimError("Unimplemented display target type");
+    }
+    }
+
     /* Map exit handlers to curses reset procedure */
     memset(&action_quit, 0, sizeof(action_quit));
-    (*(void **)(&(action_quit.sa_handler))) = (VOID *)screen_exit;
+    (*(void **)(&(action_quit.sa_handler))) = (VOID *)exit_handler;
     sigaction(SIGTERM, &action_quit, NULL);
     sigaction(SIGINT, &action_quit, NULL);
     sigaction(SIGKILL, &action_quit, NULL);
@@ -145,7 +195,7 @@ RETVAL Display::run(VOID *arg)
     LOG_ENTERFN();
 
     m_lastRunTime = getMilliSeconds();
-    disp();
+    displayToTarget();
     pause();
 
     LOG_EXITFN(ROK);
@@ -278,12 +328,114 @@ VOID Display::disp()
     fflush(stdout);
 }
 
+VOID Display::printJobFile(Job *job)
+{
+    switch (job->type())
+    {
+    case JOB_TYPE_SEND:
+    {
+        fout << job->m_msgName << ":"
+             << " Sent:" << job->m_numSnd
+             << " Retrans:" << job->m_numSndRetrans
+             << " Timeout:" << job->m_numTimeOut
+             << std::endl;
+        break;
+    }
+    case JOB_TYPE_RECV:
+    {
+        fout << job->m_msgName << ":"
+             << " Recv:" << job->m_numRcv
+             << " Retrans:" << job->m_numRcvRetrans
+             << " Unexpected:" << job->m_numUnexp
+	     << std::endl;
+        break;
+    }
+    case JOB_TYPE_WAIT:
+    default:
+    {
+        break;
+    }
+    }
+}
+
+VOID Display::dispFile()
+{
+    Time_t runTime = (getMilliSeconds() / 1000) - m_startTime;
+    fout << "Run-Time:" << (U32)runTime
+         << " Interface:" << m_ifTypeStr.c_str()
+         << " Local:" << m_localIpAddrStr << "/" << m_localPort
+         << " Remote:" << m_remIpAddrStr << "/" << m_remPort
+         << std::endl;
+
+    Counter ssnCreated = getStats(GSIM_STAT_NUM_SESSIONS_CREATED);
+    Counter ssnSucc    = getStats(GSIM_STAT_NUM_SESSIONS_SUCC);
+    Counter ssnFail    = getStats(GSIM_STAT_NUM_SESSIONS_FAIL);
+    Counter deadCalls  = getStats(GSIM_STAT_NUM_DEADCALLS);
+    fout << "Sessions:" << ssnCreated << " Completed:" << ssnSucc
+         << " Aborted:" << ssnFail << " Dead-Calls:" << deadCalls
+	 << std::endl;
+
+    for (U32 i = 0; i < m_procSeq->size(); i++)
+    {
+        Procedure *proc = m_procSeq->at(i);
+
+        switch (proc->type())
+        {
+        case PROC_TYPE_WAIT:
+        {
+            printJobFile(proc->m_wait);
+            break;
+        }
+        case PROC_TYPE_REQ_RSP:
+        {
+            printJobFile(proc->m_initial);
+            printJobFile(proc->m_trigMsg);
+            break;
+        }
+        case PROC_TYPE_REQ_TRIG_REP:
+        {
+            printJobFile(proc->m_initial);
+            printJobFile(proc->m_trigMsg);
+            printJobFile(proc->m_trigReply);
+            break;
+        }
+        default:
+        {
+            break;
+        }
+        }
+    }
+
+    fout.flush();
+}
+
 Counter Display::getStats(GtpStat_t type)
 {
     return m_pStats->getStats(type);
 }
 
+VOID Display::displayToTarget()
+{
+    switch(m_dispTgt)
+    {
+    case DISP_TARGET_SCREEN:
+    {
+         disp();
+         break;
+    }
+    case DISP_TARGET_FILE:
+    {
+         dispFile();
+         break;
+    }
+    default:
+    {
+       throw GsimError("Unimplemented display target type");
+    }
+    }
+}
+
 VOID Display::displayStats()
 {
-    Display::getInstance()->disp();
+    Display::getInstance()->displayToTarget();
 }
