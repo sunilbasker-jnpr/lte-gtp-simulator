@@ -88,6 +88,8 @@ int main(int argc, char **argv)
             "file to which statistics should be written, used with option disp-target",
              cxxopts::value<std::string>());
         options.add_options()
+            ("disp-summary", "Display summary stats only");
+        options.add_options()
             ("pid-file", "Run simulator in backgroud and write PID to file"
             "file to which pid should be written",
              cxxopts::value<std::string>());

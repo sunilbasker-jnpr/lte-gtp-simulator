@@ -77,6 +77,7 @@ Config::Config()
     n3Req                                = DFLT_N3_REQUESTS;
     dispTimer                            = DFLT_DISP_REFRESH_TIMER;
     dispTarget                           = DISP_TARGET_SCREEN;
+    m_dispSummary                        = FALSE;
     m_ssnRatePeriod                      = DFLT_SESSION_RATE_PERIOD;
     m_ssnRate                            = DFLT_SESSION_RATE;
     m_deadCallWait                       = DFLT_DEAD_CALL_WAIT;
@@ -220,6 +221,11 @@ VOID Config::setConfig(cxxopts::ParseResult options)
     if ((getDisplayTarget() == DISP_TARGET_FILE) && getDisplayTargetFile().empty())
     {
         throw GsimError("Must specify argument 'disp-target-file' when 'disp-target' is file");
+    }
+
+    if (options.count("disp-summary"))
+    {
+        setDisplaySummary(TRUE);
     }
 
     if (options.count("error-file"))
@@ -418,6 +424,16 @@ VOID Config::setLogFile(string filename) throw(ErrCodeEn)
     {
         pCfg->m_logFile = filename;
     }
+}
+
+VOID Config::setDisplaySummary(BOOL val)
+{
+    m_dispSummary = val;
+}
+
+BOOL Config::getDisplaySummary()
+{
+    return m_dispSummary;
 }
 
 VOID Config::setDisplayTargetFile(string filename)

@@ -52,6 +52,7 @@ class Display: virtual public Task
       std::string       m_ifTypeStr;
       DisplayTargetEn   m_dispTgt;
       std::string       m_dispTgtFile;
+      BOOL              m_summaryOnly;
 };
 
 #endif

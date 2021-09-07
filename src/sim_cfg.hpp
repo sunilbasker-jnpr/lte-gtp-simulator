@@ -63,6 +63,7 @@ public:
     VOID setN3Requests(U32 n);
     VOID setDisplayRefreshTimer(U32 n);
     VOID setDisplayTarget(DisplayTargetEn target);
+    VOID setDisplaySummary(BOOL val);
     VOID setErrorFile(string filename) throw(ErrCodeEn);
     VOID setScenarioFile(std::string filename) throw(ErrCodeEn);
     VOID setLogFile(string filename) throw(ErrCodeEn);
@@ -85,6 +86,7 @@ public:
     U32           getDisplayRefreshTimer();
     DisplayTargetEn getDisplayTarget();
     string        getDisplayTargetFile();
+    BOOL          getDisplaySummary();
     U32           getT3Timer();
     U32           getScnRunInterval();
     const S8 *    getScnFile();
@@ -127,6 +129,7 @@ private:
     string          scnFile;        // xml scenario file path
     string          m_logFile;      // log file path
     string          dispTargetFile; // display redirected to this file
+    BOOL            m_dispSummary;
     U32             m_scnRunIntvl;
     Time_t          m_ssnRatePeriod;
     std::uint32_t   m_logLevel;

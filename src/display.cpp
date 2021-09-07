@@ -139,6 +139,7 @@ VOID Display::shutdown()
         break;
     }
     }
+    exit(0);
 }
 
 VOID Display::init()
@@ -148,6 +149,7 @@ VOID Display::init()
     m_dispTgt   = Config::getInstance()->getDisplayTarget();
     m_dispTgtFile = Config::getInstance()->getDisplayTargetFile();
     m_dispIntvl = Config::getInstance()->getDisplayRefreshTimer();
+    m_summaryOnly = Config::getInstance()->getDisplaySummary();
     m_pStats    = Stats::getInstance();
     getTimeStr(m_timeStr);
     m_startTime  = getMilliSeconds() / 1000;
@@ -280,38 +282,41 @@ VOID Display::disp()
     fprintf(stdout, "Dead-Calls:        %u\r\n", deadCalls);
 
     PRINT_SEPERATOR();
-    fprintf(stdout,
-        "                                 "
-        "Messages  Retrans   Timeout   Unexpected-Msg\r\n");
-
-    for (U32 i = 0; i < m_procSeq->size(); i++)
+    if (!m_summaryOnly)
     {
-        Procedure *proc = m_procSeq->at(i);
+        fprintf(stdout,
+            "                                 "
+            "Messages  Retrans   Timeout   Unexpected-Msg\r\n");
 
-        switch (proc->type())
+        for (U32 i = 0; i < m_procSeq->size(); i++)
         {
-        case PROC_TYPE_WAIT:
-        {
-            printJob(proc->m_wait);
-            break;
-        }
-        case PROC_TYPE_REQ_RSP:
-        {
-            printJob(proc->m_initial);
-            printJob(proc->m_trigMsg);
-            break;
-        }
-        case PROC_TYPE_REQ_TRIG_REP:
-        {
-            printJob(proc->m_initial);
-            printJob(proc->m_trigMsg);
-            printJob(proc->m_trigReply);
-            break;
-        }
-        default:
-        {
-            break;
-        }
+            Procedure *proc = m_procSeq->at(i);
+
+            switch (proc->type())
+            {
+            case PROC_TYPE_WAIT:
+            {
+                printJob(proc->m_wait);
+                break;
+            }
+            case PROC_TYPE_REQ_RSP:
+            {
+                printJob(proc->m_initial);
+                printJob(proc->m_trigMsg);
+                break;
+            }
+            case PROC_TYPE_REQ_TRIG_REP:
+            {
+                printJob(proc->m_initial);
+                printJob(proc->m_trigMsg);
+                printJob(proc->m_trigReply);
+                break;
+            }
+            default:
+            {
+                break;
+            }
+            }
         }
     }
 
@@ -375,34 +380,37 @@ VOID Display::dispFile()
          << " Aborted:" << ssnFail << " Dead-Calls:" << deadCalls
 	 << std::endl;
 
-    for (U32 i = 0; i < m_procSeq->size(); i++)
+    if (!m_summaryOnly)
     {
-        Procedure *proc = m_procSeq->at(i);
+        for (U32 i = 0; i < m_procSeq->size(); i++)
+        {
+            Procedure *proc = m_procSeq->at(i);
 
-        switch (proc->type())
-        {
-        case PROC_TYPE_WAIT:
-        {
-            printJobFile(proc->m_wait);
-            break;
-        }
-        case PROC_TYPE_REQ_RSP:
-        {
-            printJobFile(proc->m_initial);
-            printJobFile(proc->m_trigMsg);
-            break;
-        }
-        case PROC_TYPE_REQ_TRIG_REP:
-        {
-            printJobFile(proc->m_initial);
-            printJobFile(proc->m_trigMsg);
-            printJobFile(proc->m_trigReply);
-            break;
-        }
-        default:
-        {
-            break;
-        }
+            switch (proc->type())
+            {
+            case PROC_TYPE_WAIT:
+            {
+                printJobFile(proc->m_wait);
+                break;
+            }
+            case PROC_TYPE_REQ_RSP:
+            {
+                printJobFile(proc->m_initial);
+                printJobFile(proc->m_trigMsg);
+                break;
+            }
+            case PROC_TYPE_REQ_TRIG_REP:
+            {
+                printJobFile(proc->m_initial);
+                printJobFile(proc->m_trigMsg);
+                printJobFile(proc->m_trigReply);
+                break;
+            }
+            default:
+            {
+                break;
+            }
+            }
         }
     }
 
