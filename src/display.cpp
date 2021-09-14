@@ -74,6 +74,7 @@
 class Display *Display::m_pDisp = NULL;
 ofstream fout;
 PRIVATE VOID exit_handler();
+PRIVATE VOID dump_stats();
 
 Display *Display::getInstance()
 {
@@ -142,9 +143,23 @@ VOID Display::shutdown()
     exit(0);
 }
 
+PRIVATE VOID dump_stats()
+{
+    Display::getInstance()->dumpStats();
+}
+
+void Display::dumpStats()
+{
+    if (m_dispTgt == DISP_TARGET_FILE)
+    {
+        dispFile();
+    }
+}
+
 VOID Display::init()
 {
     struct sigaction action_quit;
+    struct sigaction action_dump_stats;
 
     m_dispTgt   = Config::getInstance()->getDisplayTarget();
     m_dispTgtFile = Config::getInstance()->getDisplayTargetFile();
@@ -183,6 +198,9 @@ VOID Display::init()
     }
 
     /* Map exit handlers to curses reset procedure */
+    memset(&action_dump_stats, 0, sizeof(action_dump_stats));
+    (*(void **)(&(action_dump_stats.sa_handler))) = (VOID *)dump_stats;
+    sigaction(SIGHUP, &action_dump_stats, NULL);
     memset(&action_quit, 0, sizeof(action_quit));
     (*(void **)(&(action_quit.sa_handler))) = (VOID *)exit_handler;
     sigaction(SIGTERM, &action_quit, NULL);

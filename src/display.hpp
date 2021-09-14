@@ -28,6 +28,7 @@ class Display: virtual public Task
       VOID createMsgDirLst();
 
       static void displayStats();
+      void dumpStats();
       void shutdown();
    private:
       static class Display  *m_pDisp;

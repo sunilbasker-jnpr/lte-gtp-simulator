@@ -125,7 +125,7 @@ int main(int argc, char **argv)
             {
                 pCfg->writePidFile();
             }
-	    else
+	        else
             {
                 std::cout << "Error: unable to deamonize\n";
                 exit(1);
