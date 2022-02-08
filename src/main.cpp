@@ -106,6 +106,8 @@ int main(int argc, char **argv)
         options.add_options()
             ("scenario", "Scenario file", cxxopts::value<std::string>());
         options.add_options()
+            ("timeout", "stop the application after timeout", cxxopts::value<std::uint32_t>());
+        options.add_options()
              ("help", "Print help and exit");
         // clang-format on
 
@@ -135,6 +137,10 @@ int main(int argc, char **argv)
         Logger::init(pCfg->getLogLevel());
 
         LOG_INFO("Starting simulator");
+	if (pCfg->getTimeout() != 0)
+	{
+            alarm(pCfg->getTimeout());
+	}
         Simulator *pGtpSim = Simulator::getInstance();
         pGtpSim->run();
         LOG_INFO("Stopping simulator");

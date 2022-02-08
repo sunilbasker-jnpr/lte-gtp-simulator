@@ -35,6 +35,7 @@ using namespace std;
 #define DFLT_MAX_SESSION_RATE 1000000 // 1 session per rate period
 #define DFLT_TRACE_MSG_FILE_NAME_LEN 64
 #define DFLT_DEAD_CALL_WAIT 20000 // milli seconds
+#define DFLT_TIMEOUT 0
 
 typedef enum {
     DISP_TARGET_NONE,
@@ -74,6 +75,7 @@ public:
     VOID setTraceMsg(BOOL);
     VOID setTraceMsgFile(string);
     VOID setPidFile(string);
+    VOID setTimeout(std::uint32_t timeout);
 
     IpAddr        getRemoteIpAddr();
     string        getRemIpAddrStr();
@@ -92,6 +94,7 @@ public:
     const S8 *    getScnFile();
     U32           getCallRate();
     U32           getLogLevel();
+    U32           getTimeout();
     VOID          setConfig(cxxopts::ParseResult options);
     Time_t        getSessionRatePeriod();
     EpcNodeType_t getNodeType();
@@ -133,6 +136,7 @@ private:
     U32             m_scnRunIntvl;
     Time_t          m_ssnRatePeriod;
     std::uint32_t   m_logLevel;
+    std::uint32_t   m_timeout;
     EpcNodeType_t   m_nodeType;
     U8              m_ifType;
     std::string     m_ifTypeStr;

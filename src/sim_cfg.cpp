@@ -89,6 +89,7 @@ Config::Config()
     m_traceMsg                           = FALSE;
     pid_t pid                            = getpid();
     m_localIpAddrStr                     = DFLT_LOCAL_IP_ADDR;
+    m_timeout                            = DFLT_TIMEOUT;
 
     saveIp(m_localIpAddrStr, &locIpAddr);
 
@@ -250,6 +251,12 @@ VOID Config::setConfig(cxxopts::ParseResult options)
     {
         auto value = options["pid-file"].as<std::string>();
         setPidFile(value);
+    }
+
+    if (options.count("timeout"))
+    {
+        auto value = options["timeout"].as<std::uint32_t>();
+        setTimeout(value);
     }
 }
 
@@ -569,6 +576,16 @@ VOID Config::setLogLevel(std::uint32_t level)
 U32 Config::getLogLevel()
 {
     return m_logLevel;
+}
+
+VOID Config::setTimeout(std::uint32_t timeout)
+{
+    m_timeout = timeout;
+}
+
+U32 Config::getTimeout()
+{
+    return m_timeout;
 }
 
 EpcNodeType_t Config::getNodeType()

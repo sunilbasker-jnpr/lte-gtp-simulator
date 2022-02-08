@@ -204,6 +204,7 @@ VOID Display::init()
     memset(&action_quit, 0, sizeof(action_quit));
     (*(void **)(&(action_quit.sa_handler))) = (VOID *)exit_handler;
     sigaction(SIGTERM, &action_quit, NULL);
+    sigaction(SIGALRM, &action_quit, NULL);
     sigaction(SIGINT, &action_quit, NULL);
     sigaction(SIGKILL, &action_quit, NULL);
 
